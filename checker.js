@@ -134,6 +134,7 @@ var PingModel = function(servers) {
         s.status('checking');
 
         function doPing() {
+            /*
             new ping(s.address + ":" + s.port, function(status, time, e) {
                 s.status(status);
                 s.time(time);
@@ -142,10 +143,11 @@ var PingModel = function(servers) {
                     SetPingOffset(time);
                 }
                 console.clear();
-                /*if (s.interval) {
-                	setTimeout(doPing, s.interval);
-                }*/
             });
+            */
+           s.status('checked')
+           s.time('100')
+           s.values.push('100')
         }
         setTimeout(function() {
             doPing();
