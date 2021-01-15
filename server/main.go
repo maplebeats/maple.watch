@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	ping "github.com/go-ping/ping"
+)
+
+var (
+	offset = int64(0)
 )
 
 func main() {
@@ -14,8 +20,19 @@ func main() {
 	http.Handle("/", fs)
 	http.HandleFunc("/ping", PingHandle)
 
-	log.Println("Listening on :8080...")
-	err := http.ListenAndServe(":8080", nil)
+	port := "8080"
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		off, err := strconv.Atoi(os.Args[2])
+		if err == nil {
+			offset = int64(off)
+		}
+	}
+
+	log.Println("Listening on :" + port)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,13 +48,13 @@ func PingHandle(w http.ResponseWriter, req *http.Request) {
 		w.Write([]byte(fmt.Sprintf(`{"code":1,"message":"%s"}`, err.Error())))
 		return
 	}
-	w.Write([]byte(fmt.Sprintf(`{"code":0,"data":%d}`, avg)))
+	w.Write([]byte(fmt.Sprintf(`{"code":0,"data":%d}`, avg-offset)))
 }
 
 // PingHTTP ping http
 func PingHTTP(url string) (int64, error) {
 	var sub time.Duration
-	defer func() { log.Printf("ping %s %d", url, sub) }()
+	//defer func() { log.Printf("ping %s %d", url, sub) }()
 	begin := time.Now()
 	http.Get("http://" + url)
 	end := time.Now()
