@@ -17,7 +17,7 @@ var (
 
 func main() {
 	fs := http.FileServer(http.Dir("../"))
-	http.Handle("/", fs)
+	http.Handle("/", logHandler(fs))
 	http.HandleFunc("/ping", PingHandle)
 
 	port := "8080"
@@ -38,6 +38,14 @@ func main() {
 	}
 }
 
+func logHandler(h http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+		log.Println(r.RemoteAddr, r.Header)
+	}
+	return http.HandlerFunc(fn)
+}
+
 // PingHandle ping
 func PingHandle(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
@@ -49,6 +57,7 @@ func PingHandle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.Write([]byte(fmt.Sprintf(`{"code":0,"data":%d}`, avg-offset)))
+	return
 }
 
 // PingHTTP ping http
