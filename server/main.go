@@ -25,15 +25,16 @@ func PingHandle(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
 	host := q.Get("host")
 	avg, err := Ping(host)
+	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf(`{code:1,message:"%s"}`, err.Error())))
+		w.Write([]byte(fmt.Sprintf(`{"code":1,"message":"%s"}`, err.Error())))
 		return
 	}
-	w.Write([]byte(fmt.Sprintf(`{code:0,message:"",data:%d}`, avg)))
+	w.Write([]byte(fmt.Sprintf(`{"code":0,"data":%d}`, avg)))
 }
 
 //Ping ping host
-func Ping(host string) (int64, error) {
+func PingIcmp(host string) (int64, error) {
 	var err error
 	var pinger *ping.Pinger
 	var stats *ping.Statistics
