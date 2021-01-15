@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	ping "github.com/go-ping/ping"
@@ -50,7 +51,7 @@ func logHandler(h http.Handler) http.Handler {
 func PingHandle(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
 	host := q.Get("host")
-	avg, err := PingHTTP(host)
+	avg, err := PingHTTP(host, 5)
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf(`{"code":1,"message":"%s"}`, err.Error())))
@@ -61,14 +62,22 @@ func PingHandle(w http.ResponseWriter, req *http.Request) {
 }
 
 // PingHTTP ping http
-func PingHTTP(url string) (int64, error) {
+func PingHTTP(url string, num int) (int64, error) {
 	var sub time.Duration
 	//defer func() { log.Printf("ping %s %d", url, sub) }()
 	begin := time.Now()
-	http.Get("http://" + url)
+	var wg sync.WaitGroup
+	for i := 0; i < num; i++ {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+			http.Get("http://" + url)
+		}(&wg)
+	}
+	wg.Wait()
 	end := time.Now()
 	sub = end.Sub(begin)
-	return sub.Milliseconds(), nil
+	return int64(sub.Milliseconds() / int64(num)), nil
 }
 
 //PingIcmp ping host
